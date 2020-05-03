@@ -13,7 +13,7 @@ It also visualises the total cases globally and then focuses on the cases in Afr
 
 The input data for this dashboard is the [coronavirus R package](https://github.com/RamiKrispin/coronavirus) (dev version) by [Rami Krispin](https://twitter.com/Rami_Krispin) and the [Ministry of Health, Kenya](http://www.health.go.ke/).
 The data and dashboard is refreshed on a daily bases.
-The raw data pulled from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) [Coronavirus repository](https://github.com/CSSEGISandData/COVID-19).
+The raw data pulled from the [COVID-19 Data Repository](https://github.com/CSSEGISandData/COVID-19) by the Center for Systems Science and Engineering (CSSE) at Johns Hopkins University. 
 
 This dashboard was build with the hope that it will help everyone, especially in Kenya, to keep an eye on the outbreak.
 
