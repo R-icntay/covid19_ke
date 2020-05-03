@@ -17,4 +17,4 @@ The raw data pulled from the Johns Hopkins University Center for Systems Science
 
 This dashboard was build with the hope that it will help everyone, especially in Kenya, to keep an eye on the outbreak.
 
-### Take care of yourself!
+ **Please take care of yourself and others** by following the directives issed by the government. We will beat this!
