@@ -532,7 +532,6 @@ County stats
 
 
 
-
 ```{r}
 ### **Number of cases per county in Kenya**
 # reading in the Kenyan shapefiles
@@ -593,19 +592,16 @@ cov_ctys_disp %<>% full_join(kenya_mean,by="county") %>% select(-c(county_code,l
 
 
 
-Column 
------------------------------------------------------------------------------
+Column
+--------------------------------------------------------------------
 
 
-### **Number of confirmed cases per county**
+###
 
 
-
-
-
-```{r,fig.width=14, fig.height=8}
-### 
-# ### 
+```{r,fig.width=12, fig.height=8}
+###
+# ###
 # { data-width=400 }
 # Now we want to add another information. The number of cases per county will be mapped to the colour and the size of the bubbles. Note that the order of county matters! It is advised to show the most important information on top (center). This can been done sorting your dataset before making the plot.
 
@@ -618,11 +614,11 @@ kenya_map=ggplot() +
   theme_void()+
   #ylim(-3,2)+
   #xlim(20,40)
-  ggtitle(" ")+
+  ggtitle("Number of confirmed cases per county")+
   theme(legend.position = "right",plot.title = element_text(hjust = 0.5))+
   ## to change the color of the fill aesthetic
   scale_fill_gradient(low = "#B0BEC5",high = "#B0BEC5",space="Lab")+
-  
+
   labs(
     x="longitude",
     y="latitude"
@@ -635,8 +631,15 @@ ggplotly(kenya_map,tooltip = "tooltip")
 ###
 
 
+
 ```{r}
-formattable(cov_ctys_disp,list(date=color_tile("white","#E0E0E0"),cases_today=color_tile("white","#B3E5FC"),area(col=("total_cases"))~ normalize_bar("#FFCDD2",0.2)))
+#as.datatable {formattable}-Generic function to create an htmlwidget
+
+
+as.datatable(formattable(cov_ctys_disp,list(
+  date=color_tile("white","#E0E0E0"),
+  cases_today=color_tile("white","#B3E5FC"),
+  area(col=("total_cases"))~ normalize_bar("#FFCDD2",0.2))))
 ```
 
 
