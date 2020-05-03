@@ -2,7 +2,7 @@
 
  
  
-This [COVID-19 in Kenya Dashboard](https://r-icntay.github.io/covid19_ke/) seeks to provide an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic.
+This [COVID-19 in Kenya Dashboard](https://r-icntay.github.io/covid19_ke/#county-stats) seeks to provide an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic.
 
 The dashboard mainly focuses on Kenya by visualising the total reported cases, the daily reported cases and their distribution per county. 
 
