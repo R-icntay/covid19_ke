@@ -586,9 +586,38 @@ kenya_mean= comp_df %>% group_by(county,county_code,cases,date) %>% summarise(lo
 
 # creating a table that shows the cases confirmed on that day and the cumulative cases
 
-cov_ctys_disp %<>% full_join(kenya_mean,by="county") %>% select(-c(county_code,long,lat,tooltip)) %>% replace_na(list(cases_today=0)) %>% rename(total_cases=cases) %>%  select(c("county","date","cases_today","total_cases"))
+cov_ctys_disp %<>% full_join(kenya_mean,by="county") %>% select(-c(county_code,long,lat,tooltip)) %>% replace_na(list(cases_today=0)) %>% rename(total_cases=cases) %>%  select(c("county","cases_today","total_cases"))
 
 ```
+
+
+Row {data-width=400}
+-----------------------------------------------------------------------
+
+### Day
+
+```{r}
+day=last(covid_set$date)
+
+valueBox(
+  day,
+   icon="far fa-calendar-plus",
+  color="#5C6BC0"
+)
+```
+
+### Confirmed cases for the day
+
+```{r}
+confirmed=last(covid_set_ke$daily_conf)
+valueBox(
+  format(confirmed,big.mark = ","),
+   icon = "fas fa-user-md",
+   color="#7B1FA2"
+ 
+)
+```
+
 
 
 
@@ -606,7 +635,7 @@ Column
 # Now we want to add another information. The number of cases per county will be mapped to the colour and the size of the bubbles. Note that the order of county matters! It is advised to show the most important information on top (center). This can been done sorting your dataset before making the plot.
 
 kenya_map=ggplot() +
-  geom_polygon(data=comp_df,aes(x=long,y=lat,group=county_code,fill=county_code),show.legend = FALSE)+
+  geom_polygon(data=comp_df,aes(x=long,y=lat,group=county_code,fill=county_code),linetype="dashed",color="white",lwd=0.09,show.legend = FALSE)+
   geom_point(data=kenya_mean,aes(x=long,y=lat,color=cases,size=cases,text=tooltip),alpha=0.9)+
   scale_size_continuous()+
   scale_color_viridis()+
@@ -1100,10 +1129,6 @@ The input data for this dashboard is the [coronavirus](https://github.com/RamiKr
 **Contribution** 
 
 The shape files for the **county stats** tab were contributed by [Maggie Wanjiru](https://twitter.com/magwanjiru). Thank you!
-
-
-
-
 
 
 
