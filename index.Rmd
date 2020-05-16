@@ -55,13 +55,13 @@ suppressPackageStartupMessages({
 covid_set=coronavirus
 #View(covid_set)
 
-##I won't be needing the Province.State,Lat and Long columns, for now at least.
+##I won't be needing the country,Lat and Long columns, for now at least.
 
-covid_set=covid_set %>% select(-c(Province.State,Lat,Long))
+covid_set=covid_set %>% select(-c(province,lat,long))
 
 ## we'll then be looking to widen the data, such that each incident ie Confirmed,Death and Recovered has it's own column. This will go a long way in making analysis easier.
 
-covid_set=covid_set %>% group_by(Country.Region,date,type) %>%
+covid_set=covid_set %>% group_by(country,date,type) %>%
   
   summarise(total=sum(cases)) %>% 
   
@@ -70,7 +70,7 @@ covid_set=covid_set %>% group_by(Country.Region,date,type) %>%
   # setting a column to null drops it
   ungroup() %>% mutate(daily_conf=confirmed,confirmed=NULL,daily_deaths=death,death=NULL,daily_recov=recovered,recovered=NULL,daily_active=daily_conf-daily_deaths-daily_recov) %>%
   
-group_by(Country.Region) %>% mutate(cum_conf=cumsum(daily_conf),cum_deaths=cumsum(daily_deaths),cum_recov=cumsum(daily_recov),cum_active=cum_conf-cum_deaths-cum_recov)
+group_by(country) %>% mutate(cum_conf=cumsum(daily_conf),cum_deaths=cumsum(daily_deaths),cum_recov=cumsum(daily_recov),cum_active=cum_conf-cum_deaths-cum_recov)
 ## I have then added a Week column to see how the cases change on a weekly bases
 
 ##?cut.Date
@@ -82,7 +82,7 @@ covid_set=covid_set %>% mutate(Week=as.Date(cut(date,breaks = "week",start.on.mo
 
 ## My country is Kenya, so I will build the dashboard based on Kenya. Feel free to modify it.
 
-covid_set_ke=covid_set %>% filter(Country.Region=="Kenya")
+covid_set_ke=covid_set %>% filter(country=="Kenya")
 
 ## day of first case confirmed
 day=(covid_set_ke %>% ungroup() %>% filter(daily_conf>0) %>% slice(1) %>% select(date))
@@ -342,7 +342,7 @@ daily_conf_p
 ### 
 ```{r}
 
-DT::datatable(covid_set_ke %>% ungroup %>%  select(-c(Country.Region,Week,cum_conf,cum_deaths,cum_recov,cum_active,daily_active)) %>% rename(confirmed=daily_conf,succumbed=daily_deaths,recovered=daily_recov) %>% arrange(desc(date)) %>% slice(1:5),option=list(bpaginate=FALSE))
+DT::datatable(covid_set_ke %>% ungroup %>%  select(-c(country,Week,cum_conf,cum_deaths,cum_recov,cum_active,daily_active)) %>% rename(confirmed=daily_conf,succumbed=daily_deaths,recovered=daily_recov) %>% arrange(desc(date)) %>% slice(1:5),option=list(bpaginate=FALSE))
 
 ```
 
@@ -538,7 +538,7 @@ County stats
 # If reading a shapefile, the data source name (dsn= argument) is the folder (directory) where the shapefile is, and the layer is the name of the shapefile (without the .shp extension)
 
 
-kenya_shp=readOGR(dsn="C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Covid datasets/kenyan-counties",layer="County",verbose = F)
+kenya_shp=readOGR(dsn="C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/kenyan-counties",layer="County",verbose = F)
 
 
 # converting the shp file to a df
@@ -546,14 +546,14 @@ kenya_df=fortify(kenya_shp) # use broom::tidy(kenya_m) since fortify may be depr
 kenya_df$id=as.integer(kenya_df$id)
 
 
-kenya_ctys=read_excel("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/counties.xlsx")
+kenya_ctys=read_excel("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/counties.xlsx")
 
 
 kenya_ctys %<>% select(-1)
 
 
 
-cov_ctys=read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/cov_cty.csv") %>% select(-1)
+cov_ctys=read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/cov_cty.csv") %>% select(-1)
 
 
 # for displaying newly confirmed cases and distinguishing them from the previous day's cases
@@ -866,15 +866,15 @@ Row {data-width=400}
 ## Our data is not grouped per continentwise, so how do we know which continent our country belongs to? Well, dont fret: package countrycode will do just that.
 #?countrycode()
 covid_set_africa=covid_set %>% mutate(continent=countrycode(
- sourcevar = Country.Region,
+ sourcevar = country,
  origin="country.name",
  destination = "continent"
-)) %>% group_by(Country.Region) %>% filter(continent=="Africa")
+)) %>% group_by(country) %>% filter(continent=="Africa")
 
 covid_set_africa_summary=covid_set_africa %>% group_by(date) %>% summarise(africa_confirmed=sum(daily_conf),africa_succumbed=sum(daily_deaths),africa_recovered=sum(daily_recov))
 
 ordered_afrcovid_set=covid_set_africa %>%
-group_by(Country.Region) %>% 
+group_by(country) %>% 
 summarise(total_confirmed=sum(daily_conf),total_succumbed=sum(daily_deaths),total_recovered=sum(daily_recov)) %>% 
   arrange(desc(total_confirmed))
 
@@ -1049,9 +1049,9 @@ fig_africa
 ```{r}
 ## this is quite a long piping operation but very easy in itself, just execute each part independently to ease understanding
 
-afrcov_summary=covid_set_africa %>% ungroup() %>% group_by(Country.Region) %>% filter(date==last(date)) %>% select(-c(daily_active,Week,continent,cum_active,date)) %>% arrange(desc(cum_conf))%>% rename(daily_confirmed=daily_conf,daily_succumbed=daily_deaths,daily_recovered=daily_recov,total_confirmed=cum_conf,total_succumbed=cum_deaths,total_recovered=cum_recov) %>% select(c("Country.Region","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed"))
+afrcov_summary=covid_set_africa %>% ungroup() %>% group_by(country) %>% filter(date==last(date)) %>% select(-c(daily_active,Week,continent,cum_active,date)) %>% arrange(desc(cum_conf))%>% rename(daily_confirmed=daily_conf,daily_succumbed=daily_deaths,daily_recovered=daily_recov,total_confirmed=cum_conf,total_succumbed=cum_deaths,total_recovered=cum_recov) %>% select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed"))
 
-## a better approach to arranging columns is by using dplyr::relocate rather than: select(c("Country.Region","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed")) 
+## a better approach to arranging columns is by using dplyr::relocate rather than: select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed")) 
 
 DT::datatable(afrcov_summary,option=list(bpaginate=FALSE))
 
@@ -1115,15 +1115,23 @@ About
 
 Last updated: `r format(max(coronavirus::coronavirus$date), '%d %B')`
 
-This Coronavirus dashboard provides an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic. This dashboard mainly focuses on Kenya but also gives some brief statistics about the prevalence of the pandemic in the world and Africa. This dashboard is built with R using the R Makrdown framework and was adapted from this [dashboard](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"} by Rami Krispin.
 
+This [COVID-19 in Kenya Dashboard](https://r-icntay.github.io/covid19_ke/#county-stats) seeks to provide an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic.
+
+The dashboard mainly focuses on Kenya by visualising the total reported cases, the daily reported cases and their distribution per county. 
+
+It also visualises the total cases globally and then focuses on the cases in Africa and its respective countries.
 
 
 **Data**
 
-The input data for this dashboard is the [coronavirus](https://github.com/RamiKrispin/coronavirus) R package (dev version) by Rami Krispin and the [Ministry of Health, Kenya](http://www.health.go.ke/).The data and dashboard is refreshed on a daily bases. The raw data pulled from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus [repository](https://github.com/RamiKrispin/coronavirus-csv)
+The input data for this dashboard is the [coronavirus R package](https://github.com/RamiKrispin/coronavirus) (dev version) by [Rami Krispin](https://twitter.com/Rami_Krispin) and the [Ministry of Health, Kenya](http://www.health.go.ke/).
+The data and dashboard is refreshed on a daily bases.
+The raw data is pulled from the [COVID-19 Data Repository](https://github.com/CSSEGISandData/COVID-19) by the Center for Systems Science and Engineering (CSSE) at Johns Hopkins University. 
 
+This dashboard was build with the hope that it will help everyone, especially in Kenya, to keep an eye on the outbreak.
 
+ **Please take care of yourself and others** by following the directives issed by the government. We will beat this!
 
 
 **Contribution** 
