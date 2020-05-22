@@ -188,36 +188,123 @@ Column
 
 
 ```{r,fig.width=11.5, fig.height=7}
-##,fig.width=10, fig.height=7
-
 #### day of first case confirmed
 day=(covid_set_ke %>% ungroup() %>% filter(daily_conf>0) %>% slice(1) %>% select(date))
 theme_set(theme_light())
 #?scale_color_manual
-colors=c("confirmed"="blue","succumbed"="red","recovered"="green")
+colors=c("confirmed"= "#0072B2","recovered"= "#009E73","succumbed"= "#D55E00")
 
-##fig_k=covid_set_ke %>% group_by(Week) %>% summarise(confirmed=max(cum_conf),succumbed=max(cum_deaths),recovered=max(cum_recov)) 
-  fig=covid_set_ke %>% ungroup() %>% filter(date>=day$date) %>% 
-  ggplot(aes(x=date))+
-  geom_point(mapping = aes(y=cum_conf,color="confirmed"))+
-  geom_point(mapping = aes(y=cum_deaths,color="succumbed"),alpha=0.6)+
-  geom_point(mapping=aes(y=cum_recov,color="recovered"))+
-  geom_line(mapping=aes(y=cum_conf,color="confirmed"))+
-  geom_line(mapping=aes(y=cum_deaths,color="succumbed"))+
-  geom_line(mapping=aes(y=cum_recov,color="recovered"))+
-#geom_text(aes(x=last(fig_k$Week),y=last(fig_k$confirmed),label=last(fig_k$confirmed)),alpha=1,size=4,nudge_x=0,nudge_y=2)+
-  
-#geom_text(aes(x=nth(fig_k$Week,-2),y=nth(fig_k$confirmed,-2),label=nth(fig_k$confirmed,-2)),alpha=1,size=4,nudge_x=0,nudge_y=2)+
+
+fig = covid_set_ke %>% ungroup() %>% filter(date >= day$date) %>% 
+  plot_ly(
+    x = ~date,
+    y = ~cum_conf,
+    type = 'scatter',
+    mode = 'lines+markers',
+    line = list(color = "#0072B2"),
+    marker = list(color = "#0072B2"),
+    name = 'confirmed'
     
-  labs(y="Cumulative number of cases",
-       x="Day",
-       ggtitle(""),
-       color="")+
-  scale_color_manual(values = colors)
-ggplotly(fig,tooltip = c("cum_conf","cum_recov","cum_deaths")) %>% 
-  layout(hovermode="compared")
+  ) %>% 
+  add_trace(
+    y = ~cum_recov,
+    type = 'scatter',
+    mode = 'lines+markers',
+    line = list(color = "#009E73"),
+    marker = list(color = "#009E73"),
+    name = 'recovered'
+  ) %>% 
+  add_trace(
+    y = ~cum_deaths,
+    type = 'scatter',
+    mode = 'lines+markers',
+    line = list(color = "#D55E00"),
+    marker = list(color = "#D55E00"),
+    name = 'succumbed'
+  ) %>%
+  layout(
+    title = "",
+    xaxis = list(title = "Date", zeroline = FALSE),
+    yaxis = list(title = "Cumulative number of cases", zeroline = FALSE),
+    legend = list(x = 0.1, y = 0.9),
+    hovermode = "compared",
+    # enclosing the text annotations with a color-filled rectangle
+     shapes = list(
+      list(type = 'rect', fillcolor = "#7986CB", line = list(color = "#5C6BC0"), opacity = 0.7, x0 = covid_set_ke$date[58], x1 = covid_set_ke$date[66], xref = "x", y0 = 150, y1 = 250, yref = "y"),
+      
+    # A straight line that touches the rectangle, to give a "flag" shape or something. Couldn't think of a better way at the time of writing this.
+      list(type = 'line', x0 = covid_set_ke$date[66], x1 = covid_set_ke$date[66], y0 = 0, y1 = 150, line = list(color = "#37474F", width = 1.5), opacity = 0.7),
+    
+    # Adding a color-filled rectangle
+    list(type = 'rect', fillcolor = "#009E73", line = list(color = "#009E73"), opacity = 0.7, x0 = covid_set_ke$date[91], x1 = covid_set_ke$date[106], y0 = 300, y1= 400 ), 
+    
+    # Adding a straight line that touches the rectangle
+      list(type = 'line', x0 = covid_set_ke$date[106], x1 = covid_set_ke$date[106], y0 = 26, y1 = 300, opacity = 0.7, line = list(color = "#37474F", width = 1.5)),
+    
+    # Adding a color-filled rectangle
+    list(type = 'rect', fillcolor = "#D55E00", line = list(color = "#D55E00"), opacity = 0.7, x0 = covid_set_ke$date[106], x1 = covid_set_ke$date[120], y0 = 950, y1 = 1060 ),
+    
+    # Adding a straight line that touches the rectangle
+    list(type = 'line', x0 = covid_set_ke$date[120], x1 = covid_set_ke$date[120], y0 = 50, y1 = 960, line = list(color = "#37474F", width = 1.5), opacity = 0.7 )
+      
+      # list(type = 'rect', fillcolor = "green", line = list(color = "#5C6BC0"), opacity = 0.8, x0 = covid_set_ke$date[70], x1 = covid_set_ke$date[90], xref = "x", y0 = 150, y1 = 250, yref = "y")
+      # 
+    
+    )
+    
+      
+    
+    ) %>% 
+  
+  
+  add_annotations(
+    x = covid_set_ke$date[62],
+    y = 200,
+    text = paste("Start of","\n","curfew", sep = ""),
+    xref = "x",
+    yref = "y",
+    showarrow = FALSE
+  ) %>% 
+  add_annotations(
+    x = covid_set_ke$date[98],
+    y = 350,
+    text = paste("Lockdown in","\n", "Eastleigh and Old Town", sep=""),
+    showarrow = F
+  ) %>% 
+  add_annotations(
+    x = covid_set_ke$date[113],
+    y = 1000,
+    text = paste("Total confirmed cases","\n","surpass 1000", sep=""),
+    showarrow = F
+  )
+
+
+fig
+
 ```
 
+
+
+### **Distribution of cases by gender**
+
+```{r}
+library(readxl)
+gender_distribution <- read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/gender_dist.csv") %>% select(-1)
+#colors <- c('rgb(211,94,96)', 'rgb(128,133,133)', 'rgb(144,103,167)', 'rgb(171,104,87)', 'rgb(114,147,203)')
+
+colors <- c('#00E676', 'rgb(114,147,203)')
+# selecting the first and last column
+fig_gender <- gender_distribution %>% select(c(1,ncol(gender_distribution))) %>% rename(cases = 2)
+
+fig_gender %<>% plot_ly(
+  labels = ~gender,
+  values= ~cases,
+  textinfo = 'label+percent',
+  marker = list(colors = colors)
+) %>% 
+  add_pie(hole = 0.4)
+fig_gender
+```
 
 
 
@@ -618,6 +705,18 @@ valueBox(
 )
 ```
 
+### Counties with confirmed cases
+
+```{r}
+counties <- nrow(cov_ctys_disp)
+counties_percentage <- round(100*counties/47)
+valueBox(
+  paste0(counties, "(", counties_percentage, "%", ")"),
+  color = "#595775",
+  icon = "fas fa-map-marker-alt"
+  
+)
+```
 
 
 
@@ -673,6 +772,23 @@ as.datatable(formattable(cov_ctys_disp,list(
 
 
 
+
+
+
+
+
+
+
+
+
+```{r}
+gender_distribution = tibble(
+  gender = c("Male", "Female"),
+  "19/05/2020" = c(569, 343)
+
+)
+write.csv(gender_distribution, "gender_dist.csv")
+```
 
 
 
@@ -777,14 +893,14 @@ Row
 
 ```{r}
 ## a function that defines the variable in our dataset that the animation will increment by
-accumulate_by <- function(dat, var) {
-  var <- lazyeval::f_eval(var, dat)
-  lvls <- plotly:::getLevels(var)
-  dats <- lapply(seq_along(lvls), function(x) {
-    cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
-  })
-  dplyr::bind_rows(dats)
-} 
+# accumulate_by <- function(dat, var) {
+#   var <- lazyeval::f_eval(var, dat)
+#   lvls <- plotly:::getLevels(var)
+#   dats <- lapply(seq_along(lvls), function(x) {
+#     cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
+#   })
+#   dplyr::bind_rows(dats)
+# } 
 
 
 #?POSIXct had to convert the date to milliseconds to comply with plotly's animation requirements for dates
@@ -792,7 +908,8 @@ covid_set_global=covid_set_global %>% mutate(Count=1:length(covid_set_ke$cum_con
 
 ## our animation will increase by Count, which is basically a day count from date 2020-01-22
 
-fig_glob <- covid_set_global %>% accumulate_by(~`Count`)
+fig_glob <- covid_set_global 
+# %>% accumulate_by(~`Count`)
 
 
 fig_glob <- fig_glob %>%
@@ -800,7 +917,7 @@ fig_glob <- fig_glob %>%
     x = ~date_s, 
     y = ~cum_conf,
     #split = ~city,
-    frame = ~frame, 
+    #frame = ~frame, 
     type = 'scatter',
     mode = 'lines+markers', 
   line = list(color="blue"),
@@ -819,7 +936,7 @@ fig_glob <- fig_glob %>%
 fig_glob=fig_glob %>% add_trace(
                       y=~cum_succumbed,
                       mode="lines+markers",
-                      frame = ~frame,
+                      #frame = ~frame,
                       line = list(color="red"),
                       marker=list(color="red"),
                       name="succumbed") 
@@ -827,7 +944,7 @@ fig_glob=fig_glob %>% add_trace(
 fig_glob=fig_glob %>% add_trace(
                       y=~cum_recov,
                       mode="lines+markers",
-                      frame~frame,
+                     # frame~frame,
                       line = list(color="green"),
                      marker=list(color="green"),
                       linetype="dashed",
@@ -844,10 +961,11 @@ fig_glob=fig_glob %>% add_trace(
     zeroline = F
   ),
   hovermode="compared"
-)%>% animation_opts( 
-  frame = 150, 
-  transition =2, 
-  redraw = TRUE)
+ )
+#%>% animation_opts( 
+#   frame = 150, 
+#   transition =2, 
+#   redraw = TRUE)
 
 fig_glob
 ```
@@ -1137,7 +1255,6 @@ This dashboard was build with the hope that it will help everyone, especially in
 **Contribution** 
 
 The shape files for the **county stats** tab were contributed by [Maggie Wanjiru](https://twitter.com/magwanjiru). Thank you!
-
 
 
 
