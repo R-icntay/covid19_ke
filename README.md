@@ -1,6 +1,6 @@
 # covid19_ke
 
- 
+[![eRum2020::CovidR](https://badgen.net/https/runkit.io/erum2020-covidr/badge/branches/master/eric-covid19ke?cache=300)](https://milano-r.github.io/erum2020-covidr-contest/eric-covid19ke.html) 
  
 This [COVID-19 in Kenya Dashboard](https://r-icntay.github.io/covid19_ke/#county-stats) seeks to provide an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic.
 
