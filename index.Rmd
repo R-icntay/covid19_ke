@@ -158,7 +158,7 @@ death_rate=round(100*last(covid_set_ke$cum_deaths)/last(covid_set_ke$cum_conf),2
 valueBox(
   cat(format(deaths,big.mark = ","),"(",death_rate,"%",")",sep=""),
   icon="ion-heart-half-outline",
-  color="#D50000"
+  color="#D55E00"
 )
 
 ```
@@ -364,7 +364,7 @@ valueBox(
 succumbed=last(covid_set_ke$daily_deaths)
 valueBox(
   format(succumbed,big.mark = ","),
-  color="#D50000"
+  color="#D55E00"
  
 )
 ```
@@ -613,7 +613,7 @@ dail=covid_set_ke %>% filter(date>=day$date) %>%
 
 
 County stats
-=====================================================================
+=======================================================================
 
 
 
@@ -692,6 +692,25 @@ valueBox(
   color="#5C6BC0"
 )
 ```
+
+### Samples Tested in the last 24 hours
+
+```{r}
+library(readxl)
+samples_tested <- read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/samples_tested.csv")
+samples=last(samples_tested$samples_tested)
+
+valueBox(
+  format(samples, big.mark = ","),
+   icon= "fas fa-vials",
+  color= "#ABA6BF"
+)
+```
+
+
+
+
+
 
 ### Confirmed cases for the day
 
@@ -792,6 +811,160 @@ write.csv(gender_distribution, "gender_dist.csv")
 
 
 
+SIR Model
+=======================================================================
+
+```{r include=FALSE}
+# I will try and implement a simple SIR model to predict the number of cases if no public health intervention eg quarantine, wearing of masks and social distancing had been done.
+
+# If you are unfamiliar with the SIR model, kindly visit :https://www.statsandr.com/blog/covid-19-in-belgium/
+
+# The basic idea behind the SIR model (Susceptible - Infectious - Recovered) of communicable disease outbreaks is that there are three groups (also called compartments) of individuals:
+
+# S: those who are healthy but susceptible to the disease (i.e., at risk of being contaminated). At the start of the pandemic, S is the entire population since no one is immune to the virus.
+# I: the infectious (and thus, infected) people
+# R: individuals who were contaminated but who have either recovered or died. They are not infectious anymore.
+
+# To model the dynamics of the outbreak we need three differential equations to describe the rates of change in each group, parameterised by:
+
+# β, the infection rate, which controls the transition between S and I
+# γ, the removal or recovery rate, which controls the transition between  I and R
+
+
+# Before fitting the SIR model to the data, the first step is to express these differential equations as an R function, with respect to time t.
+
+SIR <- function(time, state, parameters) {
+    par <- as.list(c(state, parameters))
+    with(par, {
+        dS <- -beta * I * S/N
+        dI <- beta * I * S/N - gamma * I
+        dR <- gamma * I
+        list(c(dS, dI, dR))
+    })
+}
+
+# our first case in Kenya was at: 13 March
+
+
+# put the daily cumulative incidence numbers for Kenya from
+# March 13 to May 13 into a vector called Infected
+sir_start_date <- "2020-03-13"
+sir_end_date <- "2020-05-13"
+Infected <- subset(covid_set_ke, date >= ymd(sir_start_date) & date <= ymd(sir_end_date))$cum_active
+
+
+# people currently infected are equal to cum_conf - cum_succ - cum_recov
+
+# Next we create an incrementing day vector the same length as the infected cases
+Day <- 1:length(Infected)
+
+# Next we specify the initial N, S, I and R
+
+N <- 47564296
+init <- c(
+  S = N - Infected[1],
+  I = Infected[1],
+  R = 0
+)
+
+
+# Then we need to define a function to calculate the RSS (residual sum of squares), given a set of values for β and γ.
+
+RSS <- function(parameters) {
+  names(parameters) <- c("beta", "gamma")
+  out <<- ode(y = init, times = Day, func = SIR, parms = parameters)
+  fit <<- out[, 3]
+  sum((Infected - fit)^2)
+}
+
+
+# Finally, we can fit the SIR model to our data by finding the values for   β and γ that minimise the residual sum of squares between the observed cumulative incidence (active cases in Kenya) and the predicted cumulative incidence (predicted by our model). We also need to check that our model has converged, as indicated by the message shown below. Start with values of 0.5 for each, and constrain them to the interval 0 to 1.0
+
+
+library(deSolve)
+
+Opt <- optim(c(0.5, 0.5),
+  RSS,
+  method = "L-BFGS-B",
+  lower = c(0, 0),
+  upper = c(1, 1)
+)
+
+# check for message
+Opt$message
+
+# Convergence is confirmed. Now we can examine the fitted values for β and γ
+Opt_par <- setNames(Opt$par, c("beta", "gamma"))
+Opt_par # beta:0.5524883  gamma:0.4475117
+
+# calculate the basic reproduction number R0 which gives the average number of susceptible people who are infected by each infectious person
+
+R0 <- as.numeric(Opt_par[1] / Opt_par[2])
+R0
+
+# An R0 of 1.23 means that, on average in Kenya, 1.23 persons are infected for each infected person.
+
+```
+
+
+Column
+-----------------------------------------------------------------------
+
+### A Naive SIR Model projection if no Public Health Interventions were enforced by the Government of Kenya.
+
+
+```{r fig.width=12, fig.height=8}
+# Using the SIR model to make predictions to see what would happen if the outbreak were left to run its course, without public health interventions.
+
+# time in days for predictions
+t <- 1:200
+
+# get the fitted values from our SIR model
+fitted_cumulative_incidence <- data.frame(ode(
+  y = init, times = t,
+  func = SIR, parms = Opt_par
+))
+
+# add a Date column and join the observed incidence data
+fitted_cumulative_incidence <- fitted_cumulative_incidence %>%
+  mutate(
+    Date = ymd(sir_start_date) + days(t - 1),
+    Country = "Kenya",
+    I = round(I),
+    R = round(R),
+    actual_infectious_cases = c(Infected, rep("NA ", length(t) - length(Infected)))
+  )
+
+# plot the data with a y-axis for better readability
+colors = c("Susceptible" = "Black", "Recovered" = "#009E73", "Infectious" = "#D55E00")
+
+theme_set(theme_light())
+kenya_sir <- fitted_cumulative_incidence %>% mutate(actual_infectious_cases = as.integer(actual_infectious_cases)) %>% 
+  ggplot(mapping = aes(x = Date))+
+  geom_line(aes(y = S, color = "Susceptible"))+
+  geom_line(aes(y = I, color = "Infectious"))+
+  geom_line(aes(y = R, color = "Recovered"))+
+ scale_y_log10(labels = scales::comma) +
+  geom_point(aes(y = actual_infectious_cases), color = "#5C4A72")+
+  ylab("Predicted Persons")+
+  xlab("Day")+
+  
+  scale_color_manual(values = colors)
+  
+  ggplotly(kenya_sir, tooltip = c("S", "I", "R", "Date")) %>% layout(hovermode = "compared")
+  
+```
+
+
+### **Disclaimer**
+These predictions should be taken with **a lot of caution**. They are based on very naive and  **rather unrealistic assumptions** eg no public health interventions such as curfews, wearing of masks, mass testing and isolation have been implemented. They also assume a fixed reproduction number **R0**.
+
+With these rather very naive predictions, if no public health interventions were made, the peak of the COVID-19 in Kenya is expected to be reached by  around 5th August with around 918,816 infected people and about 50,000 deaths (assuming a CFR of 5.5%).
+
+These quite alarming predictions however highlight the **importance** of the `public health interventions made by the government` and why the citizens should adhere to them. As it were, `if we continue to act normally, this disease will treat us abnormally`- C.S Mutahi Kagwe.
+
+For more information on how to implement much more sophisticated and realistic models, kindly visit [Antoine Soetewey](https://www.statsandr.com/blog/covid-19-in-belgium/#more-sophisticated-projections) and [Tim Churches](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/) blogs.
+
 
 
 
@@ -875,7 +1048,7 @@ succumbed=sum(covid_set_global$global_succumbed)
 death_rate=round(100*succumbed/sum(covid_set_global$global_confirmed),2)
 valueBox(
   cat(format(succumbed,big.mark = ","),"(",death_rate,"%",")",sep=""),
-  color="#D50000"
+  color="#D55E00"
  
 )
 ```
@@ -1055,7 +1228,7 @@ death_rate=round(100*(succumbed)/sum(covid_set_africa_summary$africa_confirmed),
 
 valueBox(
   cat(format(succumbed,big.mark = ","),"(",death_rate,"%",")",sep=""),
-  color="#D50000"
+  color="#D55E00"
 )
 ```
 
@@ -1255,6 +1428,8 @@ This dashboard was build with the hope that it will help everyone, especially in
 **Contribution** 
 
 The shape files for the **county stats** tab were contributed by [Maggie Wanjiru](https://twitter.com/magwanjiru). Thank you!
+
+The `SIR Model` tab was adapted from the works done by Tim Churches [Health Data Science blog](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/) and Antoine Soetewey's [blog](https://www.statsandr.com/blog/covid-19-in-belgium/#more-sophisticated-projections).
 
 
 
