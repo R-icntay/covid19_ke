@@ -116,13 +116,31 @@ valueBox(
 )
 ```
 
+
+
+### Cumulative tests conducted
+
+```{r}
+library(readxl)
+samples_tested <- read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/samples_tested.csv")
+samples=last(samples_tested$total_samples_tested)
+
+valueBox(
+  format(samples, big.mark = ","),
+   icon= "fas fa-vials",
+  color= "#ABA6BF"
+)
+```
+
+
+
 ### Total confirmed cases{.value-box}
 
 
 ```{r}
 #conf=last(covid_set_ke$cum_conf)
 valueBox(
-  value=last(covid_set_ke$cum_conf),
+  value=format(last(covid_set_ke$cum_conf), big.mark = ","),
   caption = paste("Total confirmed cases"),
    icon = "fas fa-user-md",
   color="#7B1FA2")
@@ -327,6 +345,28 @@ valueBox(
   color="#5C6BC0"
 )
 ```
+
+
+### Samples Tested in the last 24 hours
+
+```{r}
+library(readxl)
+samples_tested <- read.csv("C:/Users/ADMIN/Desktop/Intoduction to Python for data science/R for data science/aRduino/Github stuff/covid19_ke/data/samples_tested.csv")
+samples=last(samples_tested$samples_tested)
+
+valueBox(
+  format(samples, big.mark = ","),
+   icon= "fas fa-vials",
+  color= "#ABA6BF"
+)
+```
+
+
+
+
+
+
+
 
 ### Confirmed cases for the day
 
@@ -724,7 +764,7 @@ valueBox(
 )
 ```
 
-### Counties with confirmed cases
+### Counties with confirmed cases(out of 47)
 
 ```{r}
 counties <- nrow(cov_ctys_disp)
@@ -967,6 +1007,320 @@ For more information on how to implement much more sophisticated and realistic m
 
 
 
+Africa stats
+=======================================================================
+
+
+Row {data-width=400}
+-----------------------------------------------------------------------
+
+```{r}
+##----------------------stats in Africa-------------------------
+
+## Our data is not grouped per continentwise, so how do we know which continent our country belongs to? Well, dont fret: package countrycode will do just that.
+#?countrycode()
+covid_set_africa=covid_set %>% mutate(continent=countrycode(
+ sourcevar = country,
+ origin="country.name",
+ destination = "continent"
+)) %>% group_by(country) %>% filter(continent=="Africa")
+
+covid_set_africa_summary=covid_set_africa %>% group_by(date) %>% summarise(africa_confirmed=sum(daily_conf),africa_succumbed=sum(daily_deaths),africa_recovered=sum(daily_recov))
+
+ordered_afrcovid_set=covid_set_africa %>%
+group_by(country) %>% 
+summarise(total_confirmed=sum(daily_conf),total_succumbed=sum(daily_deaths),total_recovered=sum(daily_recov)) %>% 
+  arrange(desc(total_confirmed))
+
+
+```
+
+### Day
+
+```{r}
+day=last(covid_set$date)
+
+valueBox(
+  day,
+   icon="far fa-calendar-plus",
+  color="#5C6BC0"
+  
+  
+)
+```
+
+### Confirmed cases in Africa
+
+```{r}
+confirmed=sum(covid_set_africa_summary$africa_confirmed)
+valueBox(
+  format(confirmed,big.mark = ","),
+   icon = "fas fa-user-md",
+   color="#7B1FA2"
+  
+ 
+)
+```
+
+
+### Recovered cases
+
+```{r}
+recovered=sum(covid_set_africa_summary$africa_recovered)
+
+
+recov_rate=round(100*(recovered)/sum(covid_set_africa_summary$africa_confirmed),2)
+
+valueBox(
+  cat(format(recovered,big.mark = ","),"(",recov_rate,"%",")",sep=""),
+  icon="fas fa-heartbeat",
+  color="#00C853"
+)
+```
+
+
+
+
+
+### Succumbed cases
+
+```{r}
+succumbed=sum(covid_set_africa_summary$africa_succumbed)
+
+death_rate=round(100*(succumbed)/sum(covid_set_africa_summary$africa_confirmed),2)
+
+valueBox(
+  cat(format(succumbed,big.mark = ","),"(",death_rate,"%",")",sep=""),
+  color="#D55E00"
+)
+```
+
+
+
+
+
+
+
+
+Column
+----------------------------------------------------------------------
+   
+### **A comparison between Kenya and some of the countries in E.Africa **
+
+```{r,fig.width=10, fig.height=7}
+## a function that defines the variable in our dataset that the animation will increment by
+# accumulate_by <- function(dat, var) {
+#   var <- lazyeval::f_eval(var, dat)
+#   lvls <- plotly:::getLevels(var)
+#   dats <- lapply(seq_along(lvls), function(x) {
+#     cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
+#   })
+#   dplyr::bind_rows(dats)
+# } 
+
+######################################################################
+#
+# this was originally in the dashboard but I have decided to replace
+# it with a comparison between Kenya and other countries in East Africa
+#
+#######################################################################
+
+# #?POSIXct had to convert the date to milliseconds to comply with plotly's animation requirements for dates
+# covid_set_africa_summary=covid_set_africa_summary %>% mutate(Count=1:length(covid_set_ke$cum_conf),date_s=as.numeric(as.POSIXct(date,format="%Y/%m/%d"))*1000,cum_conf=cumsum(africa_confirmed),cum_succumbed=cumsum(africa_succumbed),cum_recov=cumsum(africa_recovered))
+# 
+# 
+# 
+# #fig_africa <- covid_set_africa_summary %>% accumulate_by(~`Count`)
+# 
+# 
+# fig_africa <- covid_set_africa_summary %>%
+#   plot_ly(
+#     x = ~date_s, 
+#     y = ~cum_conf,
+#     #split = ~city,
+#     #frame = ~frame, 
+#     type = 'scatter',
+#     mode = 'lines+markers', 
+#     colors="set3",
+#    # color= "orange",
+#     line = list(color="blue"),
+#    marker=list(color="blue"),
+#     #linetype = "dashed"
+#    name='confirmed'
+#   )
+# #fig_glob=fig_glob %>% add_markers(x~last(df2$Date3),
+#                      # y~last(df2$Conf_dail),
+#                       #type='scatter',
+#                      # mode="markers",
+#                      # marker=list(simplify=F))
+# 
+# 
+# 
+# fig_africa=fig_africa %>% add_trace(
+#                       y=~cum_succumbed,
+#                       mode="lines+markers",
+#                       #frame = ~frame,
+#                       line=list(color="red"),
+#                       marker=list(color="red"),
+#                       name="succumbed")
+# 
+# fig_africa=fig_africa %>% add_trace(
+#                       y=~cum_recov,
+#                       mode="lines+markers",
+#                       #frame~frame,
+#                       line=list(color="green"),
+#                       marker=list(color="green"),
+#                       linetype="dashed",
+#                       name="recovered") %>% #add_annotations(x =                            last(covid_set_africa_summary$date),                                 y=sum(covid_set_africa_summary$africa_confirmed)-last(covid_set_africa_summary$africa_confirmed),
+#                  # text = last(covid_set_africa_summary$africa_confirmed),
+#                   #xref = "x",
+#                   #yref = "y",
+#                   #showarrow = TRUE,
+#                   #arrowhead = 4,
+#                   #arrowsize = .5,
+#                   #ax = 0,
+#                   #ay = 0) %>% 
+#   layout(
+#   
+#   title="",
+#   xaxis = list(
+#     type="date",
+#     title = "Date",
+#     zeroline = F
+#   ),
+#   yaxis = list(
+#     title = "Cumulative number of cases",
+#     zeroline = F
+#   ),
+#   legend=list(x=0.1,y=0.9),
+#   hovermode="compared")
+# # )#%>% animation_opts( 
+# #   frame = 150, 
+# #   transition =0, 
+# #   redraw = TRUE) %>% animation_slider(hide=FALSE)
+# 
+# 
+# 
+# #fig_africa
+
+
+# Comparing kenya with our neighbours
+
+ke <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Kenya", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+br <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Burundi", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+eth <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Ethiopia", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+sm <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Somalia", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+ug <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Uganda", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+rw <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Rwanda", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+eg <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Egypt", date >= "2020-03-13") %>%
+        select(c(country,date, cum_conf))
+
+sa <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "South Africa", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+ag <- covid_set_africa %>% group_by(country) %>% 
+       filter(country == "Algeria", date >= "2020-03-13") %>%
+       select(c(country,date, cum_conf))
+
+fig_compare = plot_ly(
+  data = sm,
+    x = ~date,
+    y = ~cum_conf,
+    type = 'scatter',
+    mode = 'lines+markers',
+    # line = list(color = "#0072B2"),
+    # marker = list(color = "#0072B2"),
+    name = 'Somalia'
+    
+  ) %>% 
+  add_trace(
+    data = ug,
+    y = ~cum_conf,
+    type = 'scatter',
+    mode = 'lines+markers',
+    # line = list(color = "#D55E00"),
+    # marker = list(color = "#D55E00"),
+    name = 'Uganda'
+    )%>% 
+  add_trace(
+    data = rw,
+    y = ~cum_conf,
+    type = 'scatter',
+    mode = 'lines+markers',
+    # line = list(color = "#D55E00"),
+    # marker = list(color = "#D55E00"),
+    name = 'Rwanda'
+    )%>% 
+  add_trace(
+    data = ke,
+    y = ~cum_conf,
+    type = 'scatter',
+    mode = 'lines+markers',
+    line = list(color = "black"),
+    marker = list(color = "black"),
+    name = 'Kenya'
+    )%>%
+  layout(
+    title = "",
+    xaxis = list(title = "Date", zeroline = FALSE),
+    yaxis = list(title = "Cumulative number of confirmed cases", zeroline = FALSE),
+    legend = list(x = 0.1, y = 0.9),
+    hovermode = "compared"
+    # enclosing the text annotations with a color-filled rectangle
+     
+  )
+
+
+fig_compare
+
+
+
+```   
+
+
+
+
+
+
+ 
+###
+    
+
+```{r}
+## this is quite a long piping operation but very easy in itself, just execute each part independently to ease understanding
+
+afrcov_summary=covid_set_africa %>% ungroup() %>% group_by(country) %>% filter(date==last(date)) %>% select(-c(daily_active,Week,continent,cum_active,date)) %>% arrange(desc(cum_conf))%>% rename(daily_confirmed=daily_conf,daily_succumbed=daily_deaths,daily_recovered=daily_recov,total_confirmed=cum_conf,total_succumbed=cum_deaths,total_recovered=cum_recov) %>% select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed"))
+
+## a better approach to arranging columns is by using dplyr::relocate rather than: select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed")) 
+
+# DT::datatable(afrcov_summary,option=list(bpaginate=FALSE))
+
+as.datatable(formattable(afrcov_summary, lapply(1:nrow(afrcov_summary), function(row) {
+    area(row, col = -1) ~ color_tile("#7986CB", "#009E73")
+})))
+
+```
+
 
 
 
@@ -1143,210 +1497,6 @@ fig_glob=fig_glob %>% add_trace(
 fig_glob
 ```
 
-
-Africa stats
-=======================================================================
-
-
-Row {data-width=400}
------------------------------------------------------------------------
-
-```{r}
-##----------------------stats in Africa-------------------------
-
-## Our data is not grouped per continentwise, so how do we know which continent our country belongs to? Well, dont fret: package countrycode will do just that.
-#?countrycode()
-covid_set_africa=covid_set %>% mutate(continent=countrycode(
- sourcevar = country,
- origin="country.name",
- destination = "continent"
-)) %>% group_by(country) %>% filter(continent=="Africa")
-
-covid_set_africa_summary=covid_set_africa %>% group_by(date) %>% summarise(africa_confirmed=sum(daily_conf),africa_succumbed=sum(daily_deaths),africa_recovered=sum(daily_recov))
-
-ordered_afrcovid_set=covid_set_africa %>%
-group_by(country) %>% 
-summarise(total_confirmed=sum(daily_conf),total_succumbed=sum(daily_deaths),total_recovered=sum(daily_recov)) %>% 
-  arrange(desc(total_confirmed))
-
-
-```
-
-### Day
-
-```{r}
-day=last(covid_set$date)
-
-valueBox(
-  day,
-   icon="far fa-calendar-plus",
-  color="#5C6BC0"
-  
-  
-)
-```
-
-### Confirmed cases in Africa
-
-```{r}
-confirmed=sum(covid_set_africa_summary$africa_confirmed)
-valueBox(
-  format(confirmed,big.mark = ","),
-   icon = "fas fa-user-md",
-   color="#7B1FA2"
-  
- 
-)
-```
-
-
-### Recovered cases
-
-```{r}
-recovered=sum(covid_set_africa_summary$africa_recovered)
-
-
-recov_rate=round(100*(recovered)/sum(covid_set_africa_summary$africa_confirmed),2)
-
-valueBox(
-  cat(format(recovered,big.mark = ","),"(",recov_rate,"%",")",sep=""),
-  icon="fas fa-heartbeat",
-  color="#00C853"
-)
-```
-
-
-
-
-
-### Succumbed cases
-
-```{r}
-succumbed=sum(covid_set_africa_summary$africa_succumbed)
-
-death_rate=round(100*(succumbed)/sum(covid_set_africa_summary$africa_confirmed),2)
-
-valueBox(
-  cat(format(succumbed,big.mark = ","),"(",death_rate,"%",")",sep=""),
-  color="#D55E00"
-)
-```
-
-
-
-
-
-
-
-
-Column
--------------------------------------
-   
-### **Daily cumulative cases in Africa: **
-
-```{r,fig.width=5, fig.height=7}
-## a function that defines the variable in our dataset that the animation will increment by
-# accumulate_by <- function(dat, var) {
-#   var <- lazyeval::f_eval(var, dat)
-#   lvls <- plotly:::getLevels(var)
-#   dats <- lapply(seq_along(lvls), function(x) {
-#     cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
-#   })
-#   dplyr::bind_rows(dats)
-# } 
-
-
-#?POSIXct had to convert the date to milliseconds to comply with plotly's animation requirements for dates
-covid_set_africa_summary=covid_set_africa_summary %>% mutate(Count=1:length(covid_set_ke$cum_conf),date_s=as.numeric(as.POSIXct(date,format="%Y/%m/%d"))*1000,cum_conf=cumsum(africa_confirmed),cum_succumbed=cumsum(africa_succumbed),cum_recov=cumsum(africa_recovered))
-
-
-
-#fig_africa <- covid_set_africa_summary %>% accumulate_by(~`Count`)
-
-
-fig_africa <- covid_set_africa_summary %>%
-  plot_ly(
-    x = ~date_s, 
-    y = ~cum_conf,
-    #split = ~city,
-    #frame = ~frame, 
-    type = 'scatter',
-    mode = 'lines+markers', 
-    colors="set3",
-   # color= "orange",
-    line = list(color="blue"),
-   marker=list(color="blue"),
-    #linetype = "dashed"
-   name='confirmed'
-  )
-#fig_glob=fig_glob %>% add_markers(x~last(df2$Date3),
-                     # y~last(df2$Conf_dail),
-                      #type='scatter',
-                     # mode="markers",
-                     # marker=list(simplify=F))
-
-
-
-fig_africa=fig_africa %>% add_trace(
-                      y=~cum_succumbed,
-                      mode="lines+markers",
-                      #frame = ~frame,
-                      line=list(color="red"),
-                      marker=list(color="red"),
-                      name="succumbed")
-
-fig_africa=fig_africa %>% add_trace(
-                      y=~cum_recov,
-                      mode="lines+markers",
-                      #frame~frame,
-                      line=list(color="green"),
-                      marker=list(color="green"),
-                      linetype="dashed",
-                      name="recovered") %>% #add_annotations(x =                            last(covid_set_africa_summary$date),                                 y=sum(covid_set_africa_summary$africa_confirmed)-last(covid_set_africa_summary$africa_confirmed),
-                 # text = last(covid_set_africa_summary$africa_confirmed),
-                  #xref = "x",
-                  #yref = "y",
-                  #showarrow = TRUE,
-                  #arrowhead = 4,
-                  #arrowsize = .5,
-                  #ax = 0,
-                  #ay = 0) %>% 
-  layout(
-  
-  title="",
-  xaxis = list(
-    type="date",
-    title = "Date",
-    zeroline = F
-  ),
-  yaxis = list(
-    title = "Cumulative number of cases",
-    zeroline = F
-  ),
-  legend=list(x=0.1,y=0.9),
-  hovermode="compared")
-# )#%>% animation_opts( 
-#   frame = 150, 
-#   transition =0, 
-#   redraw = TRUE) %>% animation_slider(hide=FALSE)
-
-fig_africa
-```   
-
- 
-###
-    
-
-```{r}
-## this is quite a long piping operation but very easy in itself, just execute each part independently to ease understanding
-
-afrcov_summary=covid_set_africa %>% ungroup() %>% group_by(country) %>% filter(date==last(date)) %>% select(-c(daily_active,Week,continent,cum_active,date)) %>% arrange(desc(cum_conf))%>% rename(daily_confirmed=daily_conf,daily_succumbed=daily_deaths,daily_recovered=daily_recov,total_confirmed=cum_conf,total_succumbed=cum_deaths,total_recovered=cum_recov) %>% select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed"))
-
-## a better approach to arranging columns is by using dplyr::relocate rather than: select(c("country","total_confirmed","daily_confirmed","total_recovered","daily_recovered","total_succumbed","daily_succumbed")) 
-
-DT::datatable(afrcov_summary,option=list(bpaginate=FALSE))
-
-```
 
 
 
