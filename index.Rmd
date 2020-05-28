@@ -1572,7 +1572,7 @@ The raw data is pulled from the [COVID-19 Data Repository](https://github.com/CS
 
 This dashboard was build with the hope that it will help everyone, especially in Kenya, to keep an eye on the outbreak.
 
- **Please take care of yourself and others** by following the directives issed by the government. We will beat this!
+ 
 
 
 **Contribution** 
@@ -1583,4 +1583,4 @@ The `SIR Model` tab was adapted from the works done by Tim Churches [Health Data
 
 
 
-
+**Please take care of yourself and others** by following the directives issed by the government. We will beat this!
